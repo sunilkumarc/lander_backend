@@ -1,0 +1,13 @@
+{
+    "version": 2,
+    "name": "lander-backend",
+    "builds": [{
+        "src": "lander_backend/wsgi.py",
+        "use": "@ardnt/now-python-wsgi",
+        "config": { "maxLambdaSize": "15mb" }
+    }],
+    "routes": [{
+        "src": "/(.*)",
+        "dest": "/lander_backend/wsgi.py"
+    }]
+}
