@@ -8,6 +8,15 @@ from django.conf import settings
 from github import Github, GithubException
 from django.template import Context, Template
 from website.db import db_client
+import json
+from bson import ObjectId
+from website.stripe import *
+
+class JSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, ObjectId):
+            return str(o)
+        return json.JSONEncoder.default(self, o)
 
 def store_website_details(body):
     try:
@@ -18,7 +27,7 @@ def store_website_details(body):
             "plan": body["plan"],
             "payment_amount": body["payment_amount"]
         }
-        websites_collection = db_client.website_website
+        websites_collection = db_client.website
         website = websites_collection.insert_one(new_website)
         print("Website details stored successfully! Id: {}".format(website.inserted_id))
 
@@ -84,8 +93,8 @@ def create_github_repository_with_contents(request, extracted_template_folder):
                     created_repo.create_file(repo_file_path, "Committing file " + repo_file_path, data, branch="gh-pages")
                     print("Committed file {} successfully".format(f.name))
 
-    except GithubException as ge:
-        raise Exception(ge.data["message"])
+    # except GithubException as ge:
+    #     raise Exception(ge.data["message"])
     except Exception as e:
         print("Exception occurred in create_github_repository_with_contents: {}".format(e))
         raise e
@@ -127,7 +136,7 @@ def create_website_on_github(request):
         raise e
 
 def create_website_from_template(request, log_identifier):
-    logger.info(log_identifier+"Creating website with details: {}".format(request))
+    print(log_identifier+"Creating website with details: {}".format(request))
 
     try:
         create_website_on_github(request)
@@ -136,3 +145,41 @@ def create_website_from_template(request, log_identifier):
         raise e
 
     return request
+
+def get_website_details(website_name, log_identifier):
+    print(log_identifier+"Getting website details with name: {}".format(website_name))
+    website_details = None
+    try:
+        websites_collection = db_client.website
+        website_details = websites_collection.find_one({"website_name": website_name})
+        if website_details:
+            website_details = JSONEncoder().encode(website_details)
+    except Exception as e:
+        raise e
+    return website_details
+
+def create_website_session_details(website_session_details, u, log_identifier):
+    print(log_identifier+"Creating website session details with uuid: {}".format(u))
+    try:
+        stripe_session = create_stripe_session_for_payment(website_session_details, u, log_identifier)
+        website_session_details["stripe_session_id"] = stripe_session.id
+        website_session_details["uuid"] = u
+
+        websites_collection = db_client.website_session
+        website_session = websites_collection.insert_one(website_session_details)
+        print("Website session details stored successfully! id: {}".format(website_session.inserted_id))
+        return JSONEncoder().encode(website_session_details)
+    except Exception as e:
+        raise e
+
+def get_website_session_details(website_uuid, log_identifier):
+    print(log_identifier+"Getting website details with name: {}".format(website_uuid))
+    website_session_details = None
+    try:
+        website_session_collection = db_client.website_session
+        website_session_details = website_session_collection.find_one({"uuid": website_uuid})
+        if website_session_details:
+            website_session_details = JSONEncoder().encode(website_session_details)
+    except Exception as e:
+        raise e
+    return website_session_details

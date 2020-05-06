@@ -54,7 +54,7 @@ ROOT_URLCONF = 'lander_backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -132,4 +132,4 @@ BASICAUTH_USERNAME = "user"
 BASICAUTH_PASSWORD =  "pass"
 BASICAUTH_USERS = {BASICAUTH_USERNAME: BASICAUTH_PASSWORD}
 
-GITHUB_OAUTH_TOKEN = "0bb3b131e486f9831e40f0585e4e07773f22b256"
+GITHUB_OAUTH_TOKEN = "09c7241deb419fc324a68e6afd5074e3023aff02"
