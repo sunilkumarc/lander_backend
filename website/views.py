@@ -20,11 +20,13 @@ def website(request):
         log_identifier = CREATE_WEBSITE + ":" + UUID + ":" + u + ":"
         body = json.loads(request.body)
         website_details = None
-
         try:
             website_details = create_website_from_template(body, log_identifier)
+        except ErrorCreatingWebsiteException as e:
+            print(log_identifier + "Bad Request: {}".format(e))
+            return send_json_response(400, dict(success=False, uuid=u, error=str(e)))
         except Exception as e:
-            logger.error(log_identifier + "Exception occurred when creating website: {}".format(e))
+            print(log_identifier + "Exception occurred when creating website: {}".format(e))
             return send_json_response(500, dict(success=False, uuid=u, error=str(e)))
 
         return send_json_response(200, dict(success=True, uuid=u, website_details=website_details))
@@ -40,7 +42,7 @@ def website(request):
             if not website_details:
                 return send_json_response(204, dict(success=True, uuid=u, website_details={}))
         except Exception as e:
-            logger.error(log_identifier + "Exception occurred when getting website details: {}".format(e))
+            print(log_identifier + "Exception occurred when getting website details: {}".format(e))
             return send_json_response(500, dict(success=False, uuid=u, error=str(e)))
 
         return send_json_response(200, dict(success=True, uuid=u, website_details=json.loads(website_details)))
@@ -57,7 +59,7 @@ def website_session(request):
         try:
             website_details = create_website_session_details(body, u, log_identifier)
         except Exception as e:
-            logger.error(log_identifier + "Exception occurred when creating website: {}".format(e))
+            print(log_identifier + "Exception occurred when creating website: {}".format(e))
             return send_json_response(500, dict(success=False, uuid=u, error=str(e)))
 
         return send_json_response(200, dict(success=True, uuid=u, website_details=json.loads(website_details)))
@@ -73,7 +75,7 @@ def website_session(request):
             if not website_session_details:
                 return send_json_response(204, dict(success=True, uuid=u, website_details={}))
         except Exception as e:
-            logger.error(log_identifier + "Exception occurred when getting website details: {}".format(e))
+            print(log_identifier + "Exception occurred when getting website details: {}".format(e))
             return send_json_response(500, dict(success=False, uuid=u, error=str(e)))
 
         return send_json_response(200, dict(success=True, uuid=u, website_details=json.loads(website_session_details)))

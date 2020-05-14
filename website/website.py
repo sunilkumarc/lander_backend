@@ -1,4 +1,3 @@
-import logging as logger
 from website.models import Website
 import tempfile, shutil, os
 from django.contrib.staticfiles import finders
@@ -11,6 +10,8 @@ from website.db import db_client
 import json
 from bson import ObjectId
 from website.stripe import *
+from website.exceptions import *
+from website.helper import *
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
@@ -18,14 +19,14 @@ class JSONEncoder(json.JSONEncoder):
             return str(o)
         return json.JSONEncoder.default(self, o)
 
-def store_website_details(body):
+def store_website_details(website_session_details):
     try:
         new_website = {
-            "website_name": body["website_name"],
-            "company_name": body["company_name"],
-            "template_id": body["template_id"],
-            "plan": body["plan"],
-            "payment_amount": body["payment_amount"]
+            "website_uuid": website_session_details["uuid"],
+            "website_name": website_session_details["website_name"],
+            "company_name": website_session_details["company_name"],
+            "created_at": get_current_utc_timestamp(),
+            "updated_at": get_current_utc_timestamp()
         }
         websites_collection = db_client.website
         website = websites_collection.insert_one(new_website)
@@ -37,7 +38,7 @@ def store_website_details(body):
 def website_already_exists(website_name):
     print("Checking if website {} already exists".format(website_name))
     try:
-        websites_collection = db_client.website_website
+        websites_collection = db_client.website
         website = websites_collection.find_one({"website_name": website_name})
         if website:
             return True
@@ -72,7 +73,8 @@ def get_file_data_with_context(request, file_path):
 
 def create_github_repository_with_contents(request, extracted_template_folder):
     try:
-        github_client = Github(settings.GITHUB_OAUTH_TOKEN)
+        # github_client = Github(settings.GITHUB_OAUTH_TOKEN)
+        github_client = Github("sunilkumarc", "Initial!123")
         user = github_client.get_user()
         repo_name = request["website_name"]
         created_repo = user.create_repo(repo_name)
@@ -127,19 +129,37 @@ def extra_template_into_temp_dir(request):
     except Exception as e:
         raise e
 
-def create_website_on_github(request):
+def create_website_on_github(website_session_details):
     try:
-        extracted_template_folder = extra_template_into_temp_dir(request)
-        create_github_repository_with_contents(request, extracted_template_folder)
-        store_website_details(request)
+        extracted_template_folder = extra_template_into_temp_dir(website_session_details)
+        create_github_repository_with_contents(website_session_details, extracted_template_folder)
+        store_website_details(website_session_details)
     except Exception as e:
         raise e
 
 def create_website_from_template(request, log_identifier):
     print(log_identifier+"Creating website with details: {}".format(request))
-
     try:
-        create_website_on_github(request)
+        website_uuid = request.get("website_uuid", "")
+        stripe_session_id = request.get("stripe_session_id", "")
+        if not website_uuid or not stripe_session_id:
+            print(log_identifier+"website_uuid or stripe_session_id are missing")
+            raise ErrorCreatingWebsiteException("website_uuid and stripe_session_id are mandatory parameters")
+
+        website_session_collection = db_client.website_session
+        website_session_details = website_session_collection.find_one({"uuid": website_uuid})
+        print(log_identifier + "Extracted website session details {}".format(website_session_details))
+
+        if stripe_session_id != website_session_details["stripe_session_id"]:
+            print(log_identifier + "The stripe session id sent ({}) does not match the one in the database ({})".format(stripe_session_id, website_session_details["stripe_session_id"]))
+            raise ErrorCreatingWebsiteException("The stripe session id sent ({}) does not match the one in the database ({})".format(stripe_session_id, website_session_details["stripe_session_id"]))
+
+        payment_intent = get_stripe_payment_intent(website_session_details["payment_intent_id"], log_identifier)
+        if payment_intent.amount_received != (STANDARD_WEBSITE_PRICE_IN_DOLLARS * 100):
+            print(log_identifier + "Payment is not completed for website with uuid: {}".format(website_uuid))
+            raise ErrorCreatingWebsiteException("Payment is not completed for website with uuid: {}".format(website_uuid))
+
+        create_website_on_github(website_session_details)
     except Exception as e:
         print("Exception occurred when creating website: {}".format(e))
         raise e
@@ -152,6 +172,7 @@ def get_website_details(website_name, log_identifier):
     try:
         websites_collection = db_client.website
         website_details = websites_collection.find_one({"website_name": website_name})
+
         if website_details:
             website_details = JSONEncoder().encode(website_details)
     except Exception as e:
@@ -163,6 +184,9 @@ def create_website_session_details(website_session_details, u, log_identifier):
     try:
         stripe_session = create_stripe_session_for_payment(website_session_details, u, log_identifier)
         website_session_details["stripe_session_id"] = stripe_session.id
+        website_session_details["payment_intent_id"] = stripe_session.payment_intent
+        website_session_details["created_at"] = get_current_utc_timestamp()
+        website_session_details["updated_at"] = get_current_utc_timestamp()
         website_session_details["uuid"] = u
 
         websites_collection = db_client.website_session
@@ -173,7 +197,7 @@ def create_website_session_details(website_session_details, u, log_identifier):
         raise e
 
 def get_website_session_details(website_uuid, log_identifier):
-    print(log_identifier+"Getting website details with name: {}".format(website_uuid))
+    print(log_identifier+"Getting website details with uuid: {}".format(website_uuid))
     website_session_details = None
     try:
         website_session_collection = db_client.website_session

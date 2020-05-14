@@ -26,3 +26,13 @@ def create_stripe_session_for_payment(website_details, u, log_identifier):
         return stripe_session
     except Exception as e:
         raise e
+
+def get_stripe_payment_intent(payment_intent_id, log_identifier):
+    print(log_identifier + "Getting payment intent object with id {}".format(payment_intent_id))
+    try:
+        payment_intent = stripe.PaymentIntent.retrieve(
+            payment_intent_id,
+        )
+        return payment_intent
+    except Exception as e:
+        raise e

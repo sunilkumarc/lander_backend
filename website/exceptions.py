@@ -1,0 +1,2 @@
+class ErrorCreatingWebsiteException(Exception):
+   pass
