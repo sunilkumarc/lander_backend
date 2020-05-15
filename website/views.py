@@ -40,12 +40,12 @@ def website(request):
         try:
             website_details = get_website_details(website_name, log_identifier)
             if not website_details:
-                return send_json_response(204, dict(success=True, uuid=u, website_details={}))
+                return send_json_response(204, dict(success=True, is_present=False, uuid=u, website_details={}))
         except Exception as e:
             print(log_identifier + "Exception occurred when getting website details: {}".format(e))
             return send_json_response(500, dict(success=False, uuid=u, error=str(e)))
 
-        return send_json_response(200, dict(success=True, uuid=u, website_details=json.loads(website_details)))
+        return send_json_response(200, dict(success=True, is_present=True, uuid=u, website_details=json.loads(website_details)))
 
 @basic_auth_required
 @require_http_methods(["GET", "POST"])
