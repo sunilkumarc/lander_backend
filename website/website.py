@@ -12,6 +12,7 @@ from bson import ObjectId
 from website.stripe import *
 from website.exceptions import *
 from website.helper import *
+from lander_backend.constants import *
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
@@ -160,6 +161,10 @@ def create_website_from_template(request, log_identifier):
             raise ErrorCreatingWebsiteException("Payment is not completed for website with uuid: {}".format(website_uuid))
 
         create_website_on_github(website_session_details)
+        request["website_name"] = website_session_details["website_name"]
+        request["website_url"] = LANDER_WEBSITE_HOST + "/" +  website_session_details["website_name"]
+        request["payment_amount"] = payment_intent.amount_received / 100
+        del request["stripe_session_id"]
     except Exception as e:
         print("Exception occurred when creating website: {}".format(e))
         raise e

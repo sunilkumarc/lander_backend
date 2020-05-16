@@ -2,7 +2,7 @@
 .idea/
 db.sqlite3
 venv/
-*.pyc
 lander_backend/__pycache__/
 website/__pycache__/
+**/__pycache__/
 
