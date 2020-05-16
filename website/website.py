@@ -79,7 +79,6 @@ def create_github_repository_with_contents(request, extracted_template_folder):
         user = github_client.get_user()
         repo_name = request["website_name"]
         created_repo = user.create_repo(repo_name)
-        # created_repo = user.get_repo(repo_name)
         print("Created github repository with name {} successfully!".format(repo_name))
 
         for subdir, dirs, files in os.walk(extracted_template_folder):
@@ -95,9 +94,6 @@ def create_github_repository_with_contents(request, extracted_template_folder):
 
                     created_repo.create_file(repo_file_path, "Committing file " + repo_file_path, data, branch="gh-pages")
                     print("Committed file {} successfully".format(f.name))
-
-    # except GithubException as ge:
-    #     raise Exception(ge.data["message"])
     except Exception as e:
         print("Exception occurred in create_github_repository_with_contents: {}".format(e))
         raise e
