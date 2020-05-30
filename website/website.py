@@ -75,7 +75,7 @@ def get_file_data_with_context(request, file_path):
 def create_github_repository_with_contents(request, extracted_template_folder):
     try:
         # github_client = Github(settings.GITHUB_OAUTH_TOKEN)
-        github_client = Github("sunilkumarc", "Initial!123")
+        github_client = Github("landrpage", "G63MEBrBxF7FwTT")
         user = github_client.get_user()
         repo_name = request["website_name"]
         created_repo = user.create_repo(repo_name)
@@ -85,6 +85,8 @@ def create_github_repository_with_contents(request, extracted_template_folder):
             for file in files:
                 file_path = os.path.join(subdir, file)
                 if "__MACOSX" in file_path:
+                    continue
+                if ".DS_Store" in file_path:
                     continue
                 repo_file_path = file_path.split(extracted_template_folder+"/")[1]
                 with open(file_path, 'r') as f:
