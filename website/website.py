@@ -55,13 +55,16 @@ def website_already_exists(website_name):
 def get_file_data_with_context(request, file_path):
     try:
         context = request
-        feature_sections = request["feature_sections"]
-        feature_sections_split = []
+        if request["template_id"] == 2:
+            feature_sections = request["feature_sections"]
+            feature_sections_split = []
 
-        for i in range(0, len(feature_sections), 3):
-            each_row = feature_sections[i:i+3]
-            feature_sections_split.append(each_row)
-        context["feature_sections"] = feature_sections_split
+            for i in range(0, len(feature_sections), 3):
+                each_row = feature_sections[i:i + 3]
+                feature_sections_split.append(each_row)
+            context["feature_sections"] = feature_sections_split
+        else:
+            raise Exception("Could not find the template")
 
         with open(file_path, 'r') as f:
             data = f.read()
@@ -84,12 +87,13 @@ def create_github_repository_with_contents(request, extracted_template_folder):
         for subdir, dirs, files in os.walk(extracted_template_folder):
             for file in files:
                 file_path = os.path.join(subdir, file)
+
                 if "__MACOSX" in file_path:
                     continue
                 if ".DS_Store" in file_path:
                     continue
                 repo_file_path = file_path.split(extracted_template_folder+"/")[1]
-                with open(file_path, 'r') as f:
+                with open(file_path, 'rb') as f:
                     data = f.read()
                     if repo_file_path == "index.html":
                         data = get_file_data_with_context(request, file_path)

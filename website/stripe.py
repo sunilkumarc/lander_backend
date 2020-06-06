@@ -9,7 +9,7 @@ def create_stripe_session_for_payment(website_details, u, log_identifier):
         amount = STANDARD_WEBSITE_PRICE_IN_DOLLARS * 100
         success_url = PAYMENT_SUCCESS_REDIRECTION_URL + '?session_id={CHECKOUT_SESSION_ID}' + '&website_uuid=' + u
         failure_url = PAYMENT_FAILURE_REDIRECTION_URL + '?website_uuid=' + u
-        description = "Creating a brand new website " + LANDER_WEBSITE_HOST + website_details["website_name"]
+        description = "Creating website " + LANDER_WEBSITE_HOST + "/" + website_details["website_name"]
 
         stripe_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
