@@ -63,8 +63,6 @@ def get_file_data_with_context(request, file_path):
                 each_row = feature_sections[i:i + 3]
                 feature_sections_split.append(each_row)
             context["feature_sections"] = feature_sections_split
-        else:
-            raise Exception("Could not find the template")
 
         with open(file_path, 'r') as f:
             data = f.read()
