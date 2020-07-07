@@ -91,13 +91,16 @@ def create_github_repository_with_contents(request, extracted_template_folder):
                 if ".DS_Store" in file_path:
                     continue
                 repo_file_path = file_path.split(extracted_template_folder+"/")[1]
-                with open(file_path, 'rb') as f:
-                    data = f.read()
-                    if repo_file_path == "index.html":
-                        data = get_file_data_with_context(request, file_path)
+                try:
+                    with open(file_path, 'rb') as f:
+                        data = f.read()
+                        if repo_file_path == "index.html":
+                            data = get_file_data_with_context(request, file_path)
 
-                    created_repo.create_file(repo_file_path, "Committing file " + repo_file_path, data, branch="gh-pages")
-                    print("Committed file {} successfully".format(f.name))
+                        created_repo.create_file(repo_file_path, "Committing file " + repo_file_path, data, branch="gh-pages")
+                        print("Committed file {} successfully".format(f.name))
+                except Exception as e:
+                    print("Could not commit file: {}, error: {}".format(f.name, e))
     except Exception as e:
         print("Exception occurred in create_github_repository_with_contents: {}".format(e))
         raise e
