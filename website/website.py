@@ -117,11 +117,12 @@ def extra_template_into_temp_dir(request):
         template_path = finders.find(template_id + ".zip")
 
         temp_dir = tempfile.gettempdir()
-        if not os.path.exists(temp_dir + '/lander-templates'):
-            os.makedirs(temp_dir + '/lander-templates')
 
         # Delete existing contents from temp directory of landing templates
         shutil.rmtree(temp_dir + '/lander-templates')
+
+        if not os.path.exists(temp_dir + '/lander-templates'):
+            os.makedirs(temp_dir + '/lander-templates')
 
         copied_template_zip_path = os.path.join(temp_dir + '/lander-templates', template_id + ".zip")
         shutil.copy2(template_path, copied_template_zip_path)
