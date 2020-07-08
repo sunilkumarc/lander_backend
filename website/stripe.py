@@ -1,8 +1,8 @@
 import stripe
 from lander_backend.constants import *
 
-stripe.api_key = 'sk_test_EmD8xVEImHu3sw12IcdGURXd00nwsGEVDc'
-# stripe.api_key = 'sk_live_eGI2kwucMYGqvK3WoQji3dcN006joDLLPk'
+# stripe.api_key = 'sk_test_EmD8xVEImHu3sw12IcdGURXd00nwsGEVDc'
+stripe.api_key = 'sk_live_eGI2kwucMYGqvK3WoQji3dcN006joDLLPk'
 
 def create_stripe_session_for_payment(website_details, u, log_identifier):
     print(log_identifier+"Creating a new stripe session for website transaction with uuid: {}".format(u))
